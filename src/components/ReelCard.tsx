@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ExternalLink, Trash2, Tag } from 'lucide-react';
 import { Reel } from '../types';
 import { useReelStore } from '../store';
@@ -12,18 +13,14 @@ interface Props {
 export function ReelCard({ reel, onEditTags }: Props) {
   const { deleteReel } = useReelStore();
   const embedUrl = getEmbedUrl(reel);
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (window.confirm(`Delete "${reel.title}"?`)) deleteReel(reel.id);
-  };
+  const [confirming, setConfirming] = useState(false);
 
   const date = new Date(reel.addedAt).toLocaleDateString(undefined, {
     month: 'short', day: 'numeric', year: 'numeric',
   });
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden group relative">
       {/* Embed / preview area */}
       <div className="relative aspect-video bg-slate-900 overflow-hidden">
         {embedUrl ? (
@@ -66,7 +63,7 @@ export function ReelCard({ reel, onEditTags }: Props) {
               <Tag className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={handleDelete}
+              onClick={(e) => { e.stopPropagation(); setConfirming(true); }}
               title="Delete"
               className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
             >
@@ -95,6 +92,29 @@ export function ReelCard({ reel, onEditTags }: Props) {
 
         <p className="text-xs text-slate-400">{date}</p>
       </div>
+
+      {/* Inline delete confirmation overlay */}
+      {confirming && (
+        <div className="absolute inset-0 bg-white/95 rounded-xl flex flex-col items-center justify-center gap-3 p-4">
+          <Trash2 className="w-6 h-6 text-red-500" />
+          <p className="text-sm font-medium text-slate-800 text-center">Delete this reel?</p>
+          <p className="text-xs text-slate-500 text-center line-clamp-2">{reel.title}</p>
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={() => setConfirming(false)}
+              className="flex-1 px-3 py-1.5 text-sm border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => deleteReel(reel.id)}
+              className="flex-1 px-3 py-1.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
