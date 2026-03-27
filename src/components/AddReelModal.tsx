@@ -19,6 +19,7 @@ const AUTO_META_PLATFORMS: Platform[] = ['youtube', 'tiktok'];
 
 interface Props {
   onClose: () => void;
+  initialUrl?: string;
 }
 
 function TagChips({ tags, onRemove }: { tags: string[]; onRemove: (t: string) => void }) {
@@ -39,10 +40,10 @@ function TagChips({ tags, onRemove }: { tags: string[]; onRemove: (t: string) =>
   );
 }
 
-export function AddReelModal({ onClose }: Props) {
+export function AddReelModal({ onClose, initialUrl = '' }: Props) {
   const { addReel, reels } = useReelStore();
 
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(initialUrl);
   const [parsed, setParsed] = useState<ParsedUrl | null>(null);
   const [title, setTitle] = useState('');
   const [thumbnail, setThumbnail] = useState<string | null>(null);
@@ -119,18 +120,12 @@ export function AddReelModal({ onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
-  // ── Auto-generate tags from title as user types ───────────────────────────
-  useEffect(() => {
+  // ── Auto-generate tags when user finishes editing the title ──────────────
+  const handleTitleBlur = () => {
     const defaultTitles = Object.values(PLATFORM_TITLE) as string[];
-    // Skip platform defaults and the last auto-fetched value (already processed)
     if (!title || defaultTitles.includes(title) || title === lastFetchedTitle.current) return;
-
-    const timer = setTimeout(() => {
-      mergeTags([...extractKeywordTags(title), ...extractHashtags(title)]);
-    }, 600);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title]);
+    mergeTags([...extractKeywordTags(title), ...extractHashtags(title)]);
+  };
 
   function mergeTags(newTags: string[]) {
     setTags((prev) => [...new Set([...prev, ...newTags])]);
@@ -253,6 +248,7 @@ export function AddReelModal({ onClose }: Props) {
                 type="text"
                 value={title}
                 onChange={(e) => { setTitle(e.target.value); titleEdited.current = true; }}
+                onBlur={handleTitleBlur}
                 placeholder={needsManualTitle ? 'Describe what this video is about…' : 'Reel title'}
                 className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                   titleIsDefault ? 'border-amber-300 bg-amber-50 text-slate-400' : 'border-slate-200'
