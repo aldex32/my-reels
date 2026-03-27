@@ -6,6 +6,7 @@ import { fetchOEmbed } from '../utils/oembed';
 import { extractKeywordTags, extractHashtags } from '../utils/tagExtractor';
 import { ParsedUrl, Platform } from '../types';
 import { PlatformBadge, PlatformPlaceholder } from './PlatformBadge';
+import { resolveFacebookUrl } from '../utils/resolveFacebookUrl';
 
 const PLATFORM_TITLE: Record<Platform, string> = {
   youtube: 'YouTube Video',
@@ -102,6 +103,19 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
           if (meta.thumbnailUrl) setThumbnail(meta.thumbnailUrl);
         }
 
+      } else if (result.platform === 'facebook' && /\/share\/r\//.test(url.trim())) {
+        // Facebook share URLs can't be embedded — try to resolve to canonical /reel/ID URL
+        const resolved = await resolveFacebookUrl(url.trim());
+        if (resolved) {
+          const reParsed = parseReelUrl(resolved);
+          if (reParsed) {
+            setParsed(reParsed);
+            setUrl(resolved);
+            // The url change will re-trigger the useEffect, so return early
+            setIsLoading(false);
+            return;
+          }
+        }
       }
       // Instagram / Facebook — metadata fetching is blocked; user types title manually
 
