@@ -75,7 +75,9 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
         return;
       }
 
-      setParsed(result);
+      const isFbShare = result.platform === 'facebook' && /\/share\/r\//.test(url.trim());
+      // For Facebook share URLs, hide the embed until resolved
+      setParsed(isFbShare ? { ...result, embedUrl: null } : result);
       setTags(result.suggestedTags);
       const fallback = PLATFORM_TITLE[result.platform];
       setTitle(fallback);
@@ -103,7 +105,7 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
           if (meta.thumbnailUrl) setThumbnail(meta.thumbnailUrl);
         }
 
-      } else if (result.platform === 'facebook' && /\/share\/r\//.test(url.trim())) {
+      } else if (isFbShare) {
         // Facebook share URLs can't be embedded — try to resolve to canonical /reel/ID URL
         const resolved = await resolveFacebookUrl(url.trim());
         if (resolved) {
