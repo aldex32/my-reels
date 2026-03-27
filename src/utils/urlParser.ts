@@ -162,6 +162,10 @@ function parseFacebook(url: URL, host: string, rawUrl: string): ParsedUrl | null
     const path = url.pathname;
     const reelMatch = path.match(/\/reel\/(\d+)/);
     if (reelMatch) { videoId = reelMatch[1]; tags.push('reels'); }
+    if (!videoId) {
+      const shareReelMatch = path.match(/\/share\/r\/([^/?]+)/);
+      if (shareReelMatch) { videoId = shareReelMatch[1]; tags.push('reels'); }
+    }
     if (!videoId) videoId = url.searchParams.get('v');
     if (!videoId) {
       const videoMatch = path.match(/\/videos\/(\d+)/);

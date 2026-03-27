@@ -3,7 +3,6 @@ import { X, Loader2, Info } from 'lucide-react';
 import { useReelStore } from '../store';
 import { parseReelUrl } from '../utils/urlParser';
 import { fetchOEmbed } from '../utils/oembed';
-import { fetchOGMeta } from '../utils/ogFetch';
 import { extractKeywordTags, extractHashtags } from '../utils/tagExtractor';
 import { ParsedUrl, Platform } from '../types';
 import { PlatformBadge, PlatformPlaceholder } from './PlatformBadge';
@@ -100,17 +99,10 @@ export function AddReelModal({ onClose }: Props) {
           lastFetchedTitle.current = display;
           mergeTags([...extractKeywordTags(meta.title), ...extractHashtags(meta.title)]);
           if (meta.thumbnailUrl) setThumbnail(meta.thumbnailUrl);
-        } else {
-          // oEmbed failed — try OG scrape
-          const og = await fetchOGMeta(url.trim());
-          applyOGMeta(og);
         }
 
-      } else {
-        // Instagram / Facebook — OG scrape is the only option; often blocked
-        const og = await fetchOGMeta(url.trim());
-        applyOGMeta(og);
       }
+      // Instagram / Facebook — metadata fetching is blocked; user types title manually
 
       setIsLoading(false);
 
@@ -126,19 +118,6 @@ export function AddReelModal({ onClose }: Props) {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
-
-  function applyOGMeta(og: Awaited<ReturnType<typeof fetchOGMeta>>) {
-    if (!og) return;
-    if (og.title && !titleEdited.current) {
-      setTitle(og.title);
-      lastFetchedTitle.current = og.title;
-      mergeTags([...extractKeywordTags(og.title), ...extractHashtags(og.title)]);
-    }
-    if (og.image) setThumbnail(og.image);
-    if (og.description) {
-      mergeTags([...extractKeywordTags(og.description), ...extractHashtags(og.description)]);
-    }
-  }
 
   // ── Auto-generate tags from title as user types ───────────────────────────
   useEffect(() => {
