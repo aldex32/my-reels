@@ -57,16 +57,16 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
   const titleRef = useRef<HTMLInputElement>(null);
   const titleEdited = useRef(false);
   const lastFetchedTitle = useRef(''); // track what the last auto-set title was
+  const resolvedUrl = useRef(''); // canonical URL after resolving share links
 
   // ── Fetch metadata when URL is pasted ────────────────────────────────────
   useEffect(() => {
     setUrlError('');
-    setParsed(null);
-    setThumbnail(null);
     titleEdited.current = false;
     lastFetchedTitle.current = '';
+    resolvedUrl.current = '';
 
-    if (!url.trim()) { setTitle(''); setTags([]); return; }
+    if (!url.trim()) { setParsed(null); setThumbnail(null); setTitle(''); setTags([]); return; }
 
     const timer = setTimeout(async () => {
       const result = parseReelUrl(url.trim());
@@ -109,11 +109,9 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
         if (resolved) {
           const reParsed = parseReelUrl(resolved);
           if (reParsed) {
+            resolvedUrl.current = resolved;
             setParsed(reParsed);
-            setUrl(resolved);
-            // The url change will re-trigger the useEffect, so return early
-            setIsLoading(false);
-            return;
+            if (reParsed.thumbnail) setThumbnail(reParsed.thumbnail);
           }
         }
       }
@@ -160,10 +158,11 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
     e.preventDefault();
     setFormError('');
     if (!parsed) { setFormError('Please enter a valid reel URL.'); return; }
-    if (reels.some((r) => r.url === url.trim())) { setFormError('This reel has already been saved.'); return; }
+    const saveUrl = resolvedUrl.current || url.trim();
+    if (reels.some((r) => r.url === saveUrl)) { setFormError('This reel has already been saved.'); return; }
 
     addReel({
-      url: url.trim(),
+      url: saveUrl,
       platform: parsed.platform,
       videoId: parsed.videoId,
       title: title.trim() || PLATFORM_TITLE[parsed.platform],
