@@ -48,6 +48,7 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [embedReady, setEmbedReady] = useState(false);
   const [urlError, setUrlError] = useState('');
   const [formError, setFormError] = useState('');
 
@@ -59,6 +60,7 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
   // ── Fetch metadata when URL is pasted ────────────────────────────────────
   useEffect(() => {
     setUrlError('');
+    setEmbedReady(false);
     titleEdited.current = false;
     lastFetchedTitle.current = '';
     resolvedUrl.current = '';
@@ -216,22 +218,26 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
 
           {/* Preview */}
           {parsed && (
-            <div className="rounded-xl overflow-hidden bg-slate-900 aspect-video">
-              {parsed.embedUrl ? (
+            <div className="rounded-xl overflow-hidden bg-slate-900 aspect-video relative">
+              {parsed.embedUrl && (
                 <iframe
                   key={parsed.embedUrl}
                   src={parsed.embedUrl}
-                  className="w-full h-full"
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${embedReady ? 'opacity-100' : 'opacity-0'}`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title="Video preview"
                   sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+                  onLoad={() => setEmbedReady(true)}
                 />
-              ) : thumbnail ? (
-                <img src={thumbnail} alt="Preview" className="w-full h-full object-cover"
-                  onError={() => setThumbnail(null)} />
-              ) : (
-                <PlatformPlaceholder platform={parsed.platform} />
+              )}
+              {!embedReady && (
+                thumbnail ? (
+                  <img src={thumbnail} alt="Preview" className="w-full h-full object-cover"
+                    onError={() => setThumbnail(null)} />
+                ) : (
+                  <PlatformPlaceholder platform={parsed.platform} />
+                )
               )}
             </div>
           )}
