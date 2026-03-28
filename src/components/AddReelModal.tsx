@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Loader2, Info } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { useReelStore } from '../store';
 import { parseReelUrl } from '../utils/urlParser';
 import { fetchOEmbed } from '../utils/oembed';
@@ -14,9 +14,6 @@ const PLATFORM_TITLE: Record<Platform, string> = {
   instagram: 'Instagram Reel',
   facebook: 'Facebook Video',
 };
-
-// Platforms that can reliably return metadata automatically
-const AUTO_META_PLATFORMS: Platform[] = ['youtube', 'tiktok'];
 
 interface Props {
   onClose: () => void;
@@ -176,7 +173,6 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
   };
 
   const titleIsDefault = parsed && Object.values(PLATFORM_TITLE).includes(title);
-  const needsManualTitle = parsed && !isLoading && !AUTO_META_PLATFORMS.includes(parsed.platform);
 
   return (
     <div
@@ -240,17 +236,6 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
             </div>
           )}
 
-          {/* Manual title hint for Facebook / Instagram */}
-          {needsManualTitle && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">
-                {parsed!.platform === 'facebook' ? 'Facebook' : 'Instagram'} blocks automatic title
-                fetching. Watch the video above and type what it's about — tags will generate automatically.
-              </p>
-            </div>
-          )}
-
           {/* Title */}
           {parsed && (
             <div>
@@ -264,7 +249,7 @@ export function AddReelModal({ onClose, initialUrl = '' }: Props) {
                 value={title}
                 onChange={(e) => { setTitle(e.target.value); titleEdited.current = true; }}
                 onBlur={handleTitleBlur}
-                placeholder={needsManualTitle ? 'Describe what this video is about…' : 'Reel title'}
+                placeholder="Reel title"
                 className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
                   titleIsDefault ? 'border-amber-300 bg-amber-50 text-slate-400' : 'border-slate-200'
                 }`}
